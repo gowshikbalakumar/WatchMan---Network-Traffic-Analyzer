@@ -218,7 +218,7 @@ Browser  ←──2s poll──→  Flask REST API
 
 ## 👨‍💻 Author
 
-Watch Man — Enhanced Network Traffic Analyzer  
-Final Year Project — B.E. Computer Science / Cybersecurity  
-Academic Year 2024–2025
-# WatchMan---Network-Traffic-Analyzer
+Watch Man — Enhanced Network Traffic Analyzer
+Gowshik Balakumar
+Pre Final Year Mini Project — B.Tech / Information Technology  
+Academic Year 2025–2026
