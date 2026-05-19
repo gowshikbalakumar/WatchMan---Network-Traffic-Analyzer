@@ -215,10 +215,3 @@ Browser  ←──2s poll──→  Flask REST API
 - **Orbitron / Rajdhani / Share Tech Mono** — typography (Google Fonts)
 
 ---
-
-## 👨‍💻 Author
-
-Watch Man — Enhanced Network Traffic Analyzer
-Gowshik Balakumar
-Pre Final Year Mini Project — B.Tech / Information Technology  
-Academic Year 2025–2026
