@@ -1,0 +1,16 @@
+# Watch Man — Network Traffic Analyzer
+# Requirements file — install with: pip install -r requirements.txt
+
+# Web framework
+flask>=3.0.0,<4.0.0
+flask-cors>=4.0.0,<5.0.0
+
+# Packet capture (optional — only needed for live capture mode, requires root)
+# Install separately if needed: pip install scapy
+scapy>=2.5.0
+
+# System metrics (optional — used for future interface enumeration)
+psutil>=5.9.0
+
+# Standard library modules used (no install needed):
+#   threading, socket, collections, time, csv, io, logging, atexit, pathlib

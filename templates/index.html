@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WatchMan · Traffic Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════  SCANLINE OVERLAY  ═══════════════════════════ -->
+<div class="scanlines"></div>
+<div class="noise"></div>
+
+<!-- ═══════════════════════════  HEADER  ══════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-ring">
+      <svg viewBox="0 0 40 40" width="40" height="40">
+        <circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <circle cx="20" cy="20" r="10" fill="none" stroke="var(--accent2)" stroke-width="1"/>
+        <circle cx="20" cy="20" r="3" fill="var(--accent)"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="logo-text">WATCH<span class="accent">MAN</span></h1>
+      <p class="logo-sub">Network Traffic Analyzer v1.0</p>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="status-pill" id="statusPill">
+      <span class="pulse-dot"></span>
+      <span id="statusText">INITIALIZING…</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="clock-block">
+      <span class="clock-label">SYS TIME</span>
+      <span class="clock-value" id="sysTime">--:--:--</span>
+    </div>
+    <div class="clock-block">
+      <span class="clock-label">UPTIME</span>
+      <span class="clock-value" id="uptime">00:00:00</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════  KPI BAR  ════════════════════════════════════ -->
+<section class="kpi-bar">
+  <div class="kpi-card">
+    <span class="kpi-label">TOTAL PACKETS</span>
+    <span class="kpi-value" id="kpiPackets">0</span>
+    <span class="kpi-sub">captured</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">DATA VOLUME</span>
+    <span class="kpi-value" id="kpiBytes">0</span>
+    <span class="kpi-sub">MB processed</span>
+  </div>
+  <div class="kpi-card accent-card">
+    <span class="kpi-label">PACKETS / SEC</span>
+    <span class="kpi-value" id="kpiPPS">0</span>
+    <span class="kpi-sub">current rate</span>
+  </div>
+  <div class="kpi-card danger-card" id="alertKpi">
+    <span class="kpi-label">ACTIVE ALERTS</span>
+    <span class="kpi-value" id="kpiAlerts">0</span>
+    <span class="kpi-sub">threats detected</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════  MAIN GRID  ══════════════════════════════════ -->
+<main class="main-grid">
+
+  <!-- ── Packets Per Second Chart ── -->
+  <div class="panel panel-wide">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-icon">◈</span> PACKET RATE
+      </span>
+      <span class="panel-badge live">LIVE</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="ppsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Protocol Pie ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-icon">◈</span> PROTOCOL MIX
+      </span>
+    </div>
+    <div class="chart-wrap chart-pie-wrap">
+      <canvas id="protoChart"></canvas>
+    </div>
+    <div id="protoLegend" class="proto-legend"></div>
+  </div>
+
+  <!-- ── Top IPs ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-icon">◈</span> TOP SOURCE IPs
+      </span>
+    </div>
+    <div id="topIpsContainer" class="ip-list"></div>
+  </div>
+
+  <!-- ── Alerts Table ── -->
+  <div class="panel panel-wide">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-icon">⚠</span> THREAT ALERTS
+      </span>
+      <div class="panel-actions">
+        <button class="btn-ghost" onclick="exportAlerts()">↓ CSV</button>
+        <button class="btn-ghost" onclick="clearAlerts()">✕ CLEAR</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="alertsTable">
+        <thead>
+          <tr>
+            <th>TIME</th>
+            <th>SEVERITY</th>
+            <th>TYPE</th>
+            <th>DETAIL</th>
+          </tr>
+        </thead>
+        <tbody id="alertsBody">
+          <tr class="empty-row"><td colspan="4">No threats detected yet…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Live Connections Table ── -->
+  <div class="panel panel-full">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-icon">◈</span> LIVE CONNECTIONS
+      </span>
+      <div class="panel-actions">
+        <div class="filter-group">
+          <select id="protoFilter" class="select-ghost" onchange="applyFilter()">
+            <option value="">ALL PROTOCOLS</option>
+            <option>TCP</option>
+            <option>UDP</option>
+            <option>ICMP</option>
+            <option>DNS</option>
+            <option>HTTP</option>
+          </select>
+        </div>
+        <button class="btn-ghost" onclick="exportTraffic()">↓ EXPORT CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap table-tall">
+      <table class="data-table" id="connTable">
+        <thead>
+          <tr>
+            <th>TIME</th>
+            <th>SOURCE IP</th>
+            <th>DESTINATION IP</th>
+            <th>PROTOCOL</th>
+            <th>SRC PORT</th>
+            <th>DST PORT</th>
+            <th>SIZE (B)</th>
+          </tr>
+        </thead>
+        <tbody id="connBody">
+          <tr class="empty-row"><td colspan="7">Waiting for traffic…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════  FOOTER  ════════════════════════════════════ -->
+<footer class="footer">
+  <span>NetWatcher © 2025 · Final Year Project · All Rights Reserved</span>
+  <span id="footerPPS" class="footer-pps">PPS: 0</span>
+</footer>
+
+<!-- ═══════════════════════════  ALERT TOAST  ════════════════════════════════ -->
+<div id="alertToast" class="alert-toast hidden"></div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
